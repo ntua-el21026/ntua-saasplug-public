@@ -1,5 +1,7 @@
 # saasPlug Final Specifications
 
+> **Coursework design archive.** The requirements, Codex instructions, and delivery rules below document the original implementation phase. The [architecture overview](../architecture-summary.md), [deployment guide](../../deploy/README.md), and [test guide](../../tests/README.md) describe the repository as it runs today.
+
 The accepted specification below retains its original source references. The [current course reference](../assignment/README.md) explains the externalized assignment material, and the [provider setup guide](../assignment/providers/README.md) identifies authorized access to the original contracts.
 
 **Course:** NTUA ECE - Technologies of Software Services  

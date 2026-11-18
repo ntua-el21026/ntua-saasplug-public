@@ -1,3 +1,12 @@
+# Service and integration verification
+
+The coursework verification record documents several runs in different environments. It includes Compose startup and gateway health, authenticated role access, scheduler controls, and selected read-only provider requests. The run tables record their individual test totals, failures, and limitations. The live provider runs omitted reservation mutations and the interactive Google OAuth callback.
+
+For reproducible offline checks of the code in this repository, see the [test guide](../tests/README.md). The [deployment guide](../deploy/README.md) describes local Compose setup and provider access. The project and issue numbers in the archived report refer to the original private coursework repository.
+
+<details>
+<summary>Original chronological verification report</summary>
+
 # Final Verification Report
 
 This report records the final verification evidence for the saasPlug MVP,
@@ -482,3 +491,5 @@ start the stack, did not call external provider APIs, did not read or print
 | Temporary extraction cleanup | Pass | Repo-local `tmp/docs` and `tmp/pdfs` audit extraction directories were removed |
 | Diagram audit artifact | Pass | `docs/diagrams/final/diagram-audit.md` records assignment checklist, code inventories, naming dictionary, inconsistencies, and applied corrections |
 | Single final UML Markdown organizer | Pass | `docs/diagrams/final/saasplug-final-uml.md` embeds all final PlantUML sources in one self-contained Markdown file |
+
+</details>

@@ -1,6 +1,6 @@
 # AI development record
 
-This archive records AI assistance during coursework development. It links task prompts to the reported changes, commands, checks, and limitations. The logs preserve original course paths and project-management references. Some destinations require course or repository access. Use the [architecture overview](../architecture-summary.md) and [test guide](../../tests/README.md) for current project instructions.
+This archive records AI assistance during coursework development. It links task prompts to the reported changes, commands, checks, and limitations. The archived prompts and run-report conventions describe how the coursework was developed. Issue and comment URLs in the logs refer to the original private repository. They are retained for traceability and require access to that repository. Use the [architecture overview](../architecture-summary.md), [deployment guide](../../deploy/README.md), and [test guide](../../tests/README.md) to work with the project.
 
 | Record | Contents |
 | --- | --- |

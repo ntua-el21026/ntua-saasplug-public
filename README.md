@@ -13,7 +13,7 @@ Read the [implemented architecture](docs/architecture-summary.md), [service inve
 
 ## Validation and scope
 
-The [offline tests](tests/README.md) cover example configuration, reservation timeouts, confirmed outcomes, and idempotent billing with nonzero failure fees. The example configuration passes Compose parsing. The [verification record](docs/final-verification.md) covers earlier service, scheduler, and live-provider checks.
+The [offline tests](tests/README.md) cover example configuration, reservation timeouts, confirmed outcomes, and idempotent billing with nonzero failure fees. The example configuration passes Compose parsing. The [verification history](docs/final-verification.md) records earlier Compose, scheduler, and read-only provider checks and their limits.
 
 The live-provider workflow needs approved NTUA network access and provider keys. Starting the stack with the example configuration leaves automatic imports and the scheduler loop disabled. An empty catalog produces an empty map/list until an authorized import. The local stack uses role-based demo accounts and supports optional Google OAuth. The background map needs internet access.
 
@@ -25,4 +25,4 @@ The [deployment guide](deploy/README.md) explains Compose prerequisites, gateway
 
 Michail Athanasios Peppas developed saasPlug for NTUA coursework. The [official course references](docs/assignment/README.md) identify the original brief, requirements specification and diagram exports. The provider contracts are available [through NTUA](docs/assignment/providers/README.md). The [reading index](docs/lectures/README.md) lists the course references and the licenses that apply to retained readings.
 
-The [documentation index](docs/README.md) separates implemented architecture, verification evidence, historical submission records, and the preserved [AI development record](docs/ai/README.md). The [MIT notice](LICENSE) applies to original project contributions. Third-party materials retain their own terms and attribution.
+The [documentation index](docs/README.md) guides readers through the implemented system, test evidence, and coursework archive. The archive includes the original [project specification](docs/specs/README.md) and [AI development record](docs/ai/README.md). The [MIT notice](LICENSE) applies to original project contributions. Third-party materials retain their own terms and attribution.

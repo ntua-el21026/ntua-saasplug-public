@@ -1,49 +1,5 @@
-# Project Specifications
+# Design specification archive
 
-This directory contains the canonical specifications for the saasPlug project.
+The [accepted specification](SPECIFICATIONS.md) records the design baseline used during coursework. It covers the project requirements, service and database boundaries, provider integration, messaging, billing, analytics, and role-based workflows.
 
-## Canonical file
-
-The main specification document is:
-
-```text
-docs/specs/SPECIFICATIONS.md
-```
-
-This file is the authoritative source for the accepted project decisions.
-
-## Purpose
-
-The specifications define:
-
-- project scope
-- actors and MVP flows
-- provider API/data acquisition strategy
-- microservices boundaries
-- data ownership and persistence
-- RabbitMQ/event strategy
-- analytics design
-- billing/pricing/invoice behavior
-- authentication and authorization
-- frontend UX/pages
-- technology stack
-- documentation and delivery rules
-
-Final delivery documents that trace back to these specifications are:
-
-- `docs/architecture-summary.md`
-- `docs/diagrams/final/`
-- `docs/final-verification.md`
-- `docs/submission-checklist.md`
-
-## Usage by Codex
-
-Codex must read `docs/specs/SPECIFICATIONS.md` before implementing any service, API, frontend flow, Docker setup, documentation, or diagram.
-
-If existing files conflict with `SPECIFICATIONS.md`, Codex must follow `SPECIFICATIONS.md` and report the conflict.
-
-## Update policy
-
-Do not change the accepted specifications casually.
-
-Specification changes require explicit user approval. If a future implementation issue reveals a required architecture change, document it as an explicit proposed amendment before modifying this file.
+The Codex instructions and delivery rules in the specification describe the original development process. For the system as implemented and instructions for running it, use the [architecture overview](../architecture-summary.md), [deployment guide](../../deploy/README.md), and [test guide](../../tests/README.md). The [AI development record](../ai/README.md) documents how the historical workflow used the specification.
