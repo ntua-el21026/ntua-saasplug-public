@@ -1,0 +1,52 @@
+@startuml
+title Provider adapter sync and catalog import sequence
+skinparam shadowing false
+
+actor "Operator" as Operator
+participant "React operator UI" as Frontend
+participant "nginx-gateway" as Gateway
+participant "scheduler-service" as Scheduler
+participant "catalog-service" as Catalog
+participant "catalog-postgres" as CatalogDb
+participant "provider adapter service\nred, green, blue" as ProviderAdapter
+participant "provider database\nmatching provider DB" as ProviderDb
+participant "External provider API" as ExternalApi
+participant "status-service" as Status
+participant "status-postgres" as StatusDb
+participant "RabbitMQ\nsaasplug.events" as Rabbit
+
+Operator -> Frontend : Run sync for all providers or one provider
+Frontend -> Gateway : POST /api/scheduler/jobs/catalog.import.* /run\nor POST /api/catalog/imports/*
+
+alt Scheduler-triggered run
+  Gateway -> Scheduler : POST /jobs/{job_key}/run
+  Scheduler -> Catalog : POST /internal/jobs/catalog/imports/all\nor /providers/{provider}\nX-Scheduler-Token, X-Job-Run-Id
+else Direct operator import
+  Gateway -> Catalog : POST /imports/all or /imports/providers/{provider}
+end
+
+Catalog -> CatalogDb : Insert catalog_import_runs\nand acquire catalog_import_locks
+Catalog -> ProviderAdapter : POST /internal/sync
+ProviderAdapter -> ExternalApi : GET list endpoint\n/points, /chargingPoints, or /locations
+ExternalApi --> ProviderAdapter : Provider JSON array
+ProviderAdapter -> ProviderDb : Store raw_provider_payloads
+ProviderAdapter -> ProviderDb : Upsert provider_point_snapshots\nrecord provider_point_changes
+ProviderAdapter -> ProviderDb : Complete provider_sync_runs
+ProviderAdapter --> Catalog : SyncSummaryResponse
+Catalog -> ProviderAdapter : GET /internal/points
+ProviderAdapter -> ProviderDb : Read active normalized snapshots
+ProviderAdapter --> Catalog : ProviderPointDTO list
+Catalog -> CatalogDb : Upsert catalog_points\nrecord catalog_point_changes\nmark missing points stale
+Catalog -> Status : POST /internal/cache/seed\nX-Scheduler-Token
+Status -> StatusDb : Upsert status_cache
+Catalog -> CatalogDb : Complete catalog_import_runs\nrelease catalog_import_locks
+Catalog -> Rabbit : Best-effort publish catalog.points.imported
+Catalog --> Scheduler : ImportSummaryResponse
+Scheduler --> Gateway : JobRunResponse
+Gateway --> Frontend : Run status and summary
+
+note right of ProviderAdapter
+Provider adapters call external APIs and persist provider-local snapshots.
+They do not actively publish provider snapshot RabbitMQ events in the current implementation.
+end note
+@enduml

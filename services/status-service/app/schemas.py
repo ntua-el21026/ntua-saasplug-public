@@ -1,0 +1,132 @@
+from pydantic import BaseModel, Field
+
+
+MINIMUM_CACHE_TTL_SECONDS = 30
+DEFAULT_CACHE_TTL_SECONDS = 300
+
+
+class CurrentPrincipal(BaseModel):
+    sub: str
+    email: str
+    roles: list[str]
+    provider_id: str | None = None
+    provider_code: str | None = None
+
+
+class ProviderStatusDTO(BaseModel):
+    provider_code: str
+    external_point_id: str
+    normalized_point_id: str
+    status: str | None = None
+    reservation_ends_at: str | None = None
+    checked_at: str
+
+
+class StatusLookupResponse(BaseModel):
+    provider_code: str
+    external_point_id: str
+    normalized_point_id: str
+    status: str
+    reservation_ends_at: str | None
+    checked_at: str
+    expires_at: str
+    cache_hit: bool
+    provider_called: bool
+    returned_stale: bool
+    source: str
+    warning: str | None = None
+
+
+class StatusBatchLookupItem(BaseModel):
+    provider_code: str
+    external_point_id: str
+
+
+class StatusBatchLookupRequest(BaseModel):
+    points: list[StatusBatchLookupItem] = Field(min_length=1, max_length=500)
+    force_refresh: bool = False
+
+
+class StatusBatchLookupError(BaseModel):
+    provider_code: str
+    external_point_id: str
+    status: str = "unknown"
+    error_type: str
+    message: str
+    external_status_code: int | None = None
+
+
+class StatusBatchLookupResponse(BaseModel):
+    items: list[StatusLookupResponse]
+    errors: list[StatusBatchLookupError]
+
+
+class StatusCacheSeedItem(BaseModel):
+    provider_code: str
+    external_point_id: str
+    status: str | None = None
+    reservation_ends_at: str | None = None
+    checked_at: str | None = None
+    raw_payload: dict | None = None
+
+
+class StatusCacheSeedRequest(BaseModel):
+    points: list[StatusCacheSeedItem] = Field(min_length=1, max_length=1000)
+
+
+class StatusCacheSeedResponse(BaseModel):
+    upserted_count: int
+
+
+class StatusCacheResponse(BaseModel):
+    provider_code: str
+    external_point_id: str
+    normalized_point_id: str
+    status: str
+    reservation_ends_at: str | None
+    last_checked_at: str
+    expires_at: str
+    source: str
+    last_error_type: str | None
+    last_error_message: str | None
+
+
+class StatusCachePolicyResponse(BaseModel):
+    ttl_seconds: int
+    minimum_ttl_seconds: int
+    default_ttl_seconds: int
+    updated_at: str
+
+
+class StatusCachePolicyUpdateRequest(BaseModel):
+    ttl_seconds: int = Field(ge=MINIMUM_CACHE_TTL_SECONDS)
+
+
+class StatusCheckLogResponse(BaseModel):
+    id: str
+    provider_code: str
+    external_point_id: str
+    normalized_point_id: str
+    requested_by_user_id: str | None
+    requested_by_email: str | None
+    requested_by_roles: list[str]
+    requested_by_provider_code: str | None
+    cache_hit: bool
+    force_refresh: bool
+    result_status: str | None
+    returned_stale: bool
+    provider_called: bool
+    provider_error_type: str | None
+    provider_error_message: str | None
+    external_status_code: int | None
+    checked_at: str
+
+
+class ProviderFreshnessResponse(BaseModel):
+    provider_code: str
+    cached_count: int
+    valid_cache_count: int
+    expired_cache_count: int
+    last_checked_at: str | None
+    last_log_status: str | None
+    last_error_type: str | None

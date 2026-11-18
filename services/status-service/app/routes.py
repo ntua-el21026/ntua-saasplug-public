@@ -1,0 +1,496 @@
+from typing import Any
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.config import PROVIDER_CODES, Settings, get_settings
+from app.database import get_db
+from app.event_publisher import publish_best_effort_event
+from app.models import StatusCache, StatusCachePolicy, StatusCheckLog, utcnow
+from app.provider_client import ProviderServiceClient, ProviderServiceError
+from app.schemas import (
+    CurrentPrincipal,
+    ProviderFreshnessResponse,
+    StatusBatchLookupRequest,
+    StatusBatchLookupResponse,
+    StatusBatchLookupError,
+    StatusCacheSeedRequest,
+    StatusCacheSeedResponse,
+    StatusCacheResponse,
+    StatusCachePolicyResponse,
+    StatusCachePolicyUpdateRequest,
+    StatusCheckLogResponse,
+    StatusLookupResponse,
+)
+from app.security import ensure_can_query_point_status, ensure_log_reader, ensure_operator, get_current_principal
+from app.status_logic import (
+    ensure_cache_policy,
+    ensure_aware_utc,
+    get_cache,
+    lookup_status,
+    normalized_point_id,
+    status_response,
+    update_cache_policy,
+    upsert_cache_seed,
+    validate_provider_code,
+)
+from saasplug_events.routing import EventType
+
+router = APIRouter(tags=["status"])
+
+
+def cache_response(cache: StatusCache) -> StatusCacheResponse:
+    return StatusCacheResponse(
+        provider_code=cache.provider_code,
+        external_point_id=cache.external_point_id,
+        normalized_point_id=cache.normalized_point_id,
+        status=cache.status,
+        reservation_ends_at=cache.reservation_ends_at,
+        last_checked_at=cache.last_checked_at.isoformat(),
+        expires_at=cache.expires_at.isoformat(),
+        source=cache.source,
+        last_error_type=cache.last_error_type,
+        last_error_message=cache.last_error_message,
+    )
+
+
+def cache_policy_response(policy: StatusCachePolicy, settings: Settings) -> StatusCachePolicyResponse:
+    return StatusCachePolicyResponse(
+        ttl_seconds=policy.ttl_seconds,
+        minimum_ttl_seconds=30,
+        default_ttl_seconds=settings.cache_ttl_seconds,
+        updated_at=policy.updated_at.isoformat(),
+    )
+
+
+def operator_log_response(log: StatusCheckLog) -> dict[str, Any]:
+    return StatusCheckLogResponse(
+        id=log.id,
+        provider_code=log.provider_code,
+        external_point_id=log.external_point_id,
+        normalized_point_id=log.normalized_point_id,
+        requested_by_user_id=log.requested_by_user_id,
+        requested_by_email=log.requested_by_email,
+        requested_by_roles=log.requested_by_roles,
+        requested_by_provider_code=log.requested_by_provider_code,
+        cache_hit=log.cache_hit,
+        force_refresh=log.force_refresh,
+        result_status=log.result_status,
+        returned_stale=log.returned_stale,
+        provider_called=log.provider_called,
+        provider_error_type=log.provider_error_type,
+        provider_error_message=log.provider_error_message,
+        external_status_code=log.external_status_code,
+        checked_at=log.checked_at.isoformat(),
+    ).model_dump(mode="json")
+
+
+def provider_admin_log_response(log: StatusCheckLog) -> dict[str, Any]:
+    return {
+        "id": log.id,
+        "provider_code": log.provider_code,
+        "external_point_id": log.external_point_id,
+        "normalized_point_id": log.normalized_point_id,
+        "cache_hit": log.cache_hit,
+        "force_refresh": log.force_refresh,
+        "result_status": log.result_status,
+        "returned_stale": log.returned_stale,
+        "provider_called": log.provider_called,
+        "provider_error_type": log.provider_error_type,
+        "provider_error_message": log.provider_error_message,
+        "external_status_code": log.external_status_code,
+        "checked_at": log.checked_at.isoformat(),
+    }
+
+
+def log_response_for_principal(log: StatusCheckLog, principal: CurrentPrincipal) -> dict[str, Any]:
+    if "PROVIDER_ADMIN" in principal.roles and "OPERATOR" not in principal.roles:
+        return provider_admin_log_response(log)
+    return operator_log_response(log)
+
+
+def require_internal_token(
+    x_scheduler_token: str | None = Header(default=None, alias="X-Scheduler-Token"),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    if not x_scheduler_token or x_scheduler_token != settings.scheduler_internal_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid scheduler token")
+
+
+@router.post("/cache/statuses", response_model=StatusBatchLookupResponse)
+def read_cached_point_statuses(
+    body: StatusBatchLookupRequest,
+    db: Session = Depends(get_db),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusBatchLookupResponse:
+    now = utcnow()
+    items: list[StatusLookupResponse] = []
+    seen: set[tuple[str, str]] = set()
+    for point in body.points:
+        provider_code = point.provider_code
+        external_point_id = point.external_point_id
+        try:
+            validate_provider_code(provider_code)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        ensure_can_query_point_status(principal, provider_code)
+        key = (provider_code, external_point_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        cache = get_cache(db, provider_code, external_point_id)
+        if cache is None:
+            items.append(
+                StatusLookupResponse(
+                    provider_code=provider_code,
+                    external_point_id=external_point_id,
+                    normalized_point_id=normalized_point_id(provider_code, external_point_id),
+                    status="unknown",
+                    reservation_ends_at=None,
+                    checked_at=now.isoformat(),
+                    expires_at=now.isoformat(),
+                    cache_hit=False,
+                    provider_called=False,
+                    returned_stale=False,
+                    source="cache_missing",
+                ),
+            )
+            continue
+        expired = ensure_aware_utc(cache.expires_at) <= now
+        items.append(
+            status_response(
+                cache,
+                cache_hit=not expired,
+                provider_called=False,
+                returned_stale=expired,
+                source="cache_expired" if expired else "cache",
+            ),
+        )
+    return StatusBatchLookupResponse(items=items, errors=[])
+
+
+@router.post("/internal/cache/seed", response_model=StatusCacheSeedResponse)
+def seed_status_cache(
+    body: StatusCacheSeedRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    _: None = Depends(require_internal_token),
+) -> StatusCacheSeedResponse:
+    upserted_count = 0
+    for point in body.points:
+        if upsert_cache_seed(
+            db,
+            provider_code=point.provider_code,
+            external_point_id=point.external_point_id,
+            status=point.status,
+            reservation_ends_at=point.reservation_ends_at,
+            checked_at=point.checked_at,
+            raw_payload=point.raw_payload,
+            settings=settings,
+        ):
+            upserted_count += 1
+    db.commit()
+    return StatusCacheSeedResponse(upserted_count=upserted_count)
+
+
+@router.post("/points/statuses", response_model=StatusBatchLookupResponse)
+def read_point_statuses(
+    body: StatusBatchLookupRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusBatchLookupResponse:
+    unique_points: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for point in body.points:
+        provider_code = point.provider_code
+        external_point_id = point.external_point_id
+        try:
+            validate_provider_code(provider_code)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        ensure_can_query_point_status(principal, provider_code)
+        key = (provider_code, external_point_id)
+        if key not in seen:
+            seen.add(key)
+            unique_points.append(key)
+
+    provider_client = ProviderServiceClient(settings)
+    items: list[StatusLookupResponse] = []
+    errors: list[StatusBatchLookupError] = []
+    try:
+        for provider_code, external_point_id in unique_points:
+            try:
+                response = lookup_status(
+                    db,
+                    provider_code=provider_code,
+                    external_point_id=external_point_id,
+                    force_refresh=body.force_refresh,
+                    principal=principal,
+                    settings=settings,
+                    provider_client=provider_client,
+                )
+                publish_status_event(settings, principal, response, force_refresh=body.force_refresh)
+                items.append(response)
+            except ProviderServiceError as exc:
+                publish_status_error_event(
+                    settings,
+                    principal,
+                    provider_code=provider_code,
+                    external_point_id=external_point_id,
+                    force_refresh=body.force_refresh,
+                    error_type=exc.error_type,
+                    external_status_code=exc.external_status_code,
+                )
+                errors.append(
+                    StatusBatchLookupError(
+                        provider_code=provider_code,
+                        external_point_id=external_point_id,
+                        error_type=exc.error_type,
+                        message=exc.message,
+                        external_status_code=exc.external_status_code,
+                    ),
+                )
+        return StatusBatchLookupResponse(items=items, errors=errors)
+    finally:
+        provider_client.close()
+
+
+@router.get("/points/{provider_code}/{external_point_id}/status", response_model=StatusLookupResponse)
+def read_point_status(
+    provider_code: str,
+    external_point_id: str,
+    force_refresh: bool = Query(default=False, alias="forceRefresh"),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusLookupResponse:
+    try:
+        validate_provider_code(provider_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    ensure_can_query_point_status(principal, provider_code)
+    provider_client = ProviderServiceClient(settings)
+    try:
+        response = lookup_status(
+            db,
+            provider_code=provider_code,
+            external_point_id=external_point_id,
+            force_refresh=force_refresh,
+            principal=principal,
+            settings=settings,
+            provider_client=provider_client,
+        )
+        publish_status_event(settings, principal, response, force_refresh=force_refresh)
+        return response
+    except ProviderServiceError as exc:
+        publish_status_error_event(
+            settings,
+            principal,
+            provider_code=provider_code,
+            external_point_id=external_point_id,
+            force_refresh=force_refresh,
+            error_type=exc.error_type,
+            external_status_code=exc.external_status_code,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "provider_code": provider_code,
+                "external_point_id": external_point_id,
+                "error_type": exc.error_type,
+                "message": "Provider status lookup failed",
+                "external_status_code": exc.external_status_code,
+            },
+        ) from exc
+    finally:
+        provider_client.close()
+
+
+@router.get("/points/{provider_code}/{external_point_id}", response_model=StatusLookupResponse)
+def read_point_status_alias(
+    provider_code: str,
+    external_point_id: str,
+    force_refresh: bool = Query(default=False, alias="forceRefresh"),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusLookupResponse:
+    return read_point_status(
+        provider_code,
+        external_point_id,
+        force_refresh,
+        db,
+        settings,
+        principal,
+    )
+
+
+@router.get("/cache/{provider_code}/{external_point_id}", response_model=StatusCacheResponse)
+def read_cached_status(
+    provider_code: str,
+    external_point_id: str,
+    db: Session = Depends(get_db),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusCacheResponse:
+    try:
+        validate_provider_code(provider_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    ensure_can_query_point_status(principal, provider_code)
+    cache = get_cache(db, provider_code, external_point_id)
+    if cache is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Status cache entry not found")
+    return cache_response(cache)
+
+
+@router.get("/cache/policy", response_model=StatusCachePolicyResponse)
+def read_cache_policy(
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusCachePolicyResponse:
+    ensure_operator(principal)
+    policy = ensure_cache_policy(db, settings.cache_ttl_seconds)
+    return cache_policy_response(policy, settings)
+
+
+@router.patch("/cache/policy", response_model=StatusCachePolicyResponse)
+def update_status_cache_policy(
+    body: StatusCachePolicyUpdateRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> StatusCachePolicyResponse:
+    ensure_operator(principal)
+    policy = update_cache_policy(
+        db,
+        ttl_seconds=body.ttl_seconds,
+        default_ttl_seconds=settings.cache_ttl_seconds,
+    )
+    return cache_policy_response(policy, settings)
+
+
+@router.get("/logs", response_model=None)
+def list_logs(
+    provider_code: str | None = Query(default=None, alias="providerCode"),
+    external_point_id: str | None = Query(default=None, alias="externalPointId"),
+    limit: int = Query(default=25, ge=1, le=100),
+    db: Session = Depends(get_db),
+    principal: CurrentPrincipal = Depends(get_current_principal),
+) -> list[dict[str, Any]]:
+    ensure_log_reader(principal)
+    query = select(StatusCheckLog)
+    if "PROVIDER_ADMIN" in principal.roles and "OPERATOR" not in principal.roles:
+        query = query.where(StatusCheckLog.provider_code == principal.provider_code)
+    elif provider_code:
+        try:
+            validate_provider_code(provider_code)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        query = query.where(StatusCheckLog.provider_code == provider_code)
+    if external_point_id:
+        query = query.where(StatusCheckLog.external_point_id == external_point_id)
+    logs = db.scalars(query.order_by(StatusCheckLog.checked_at.desc()).limit(limit)).all()
+    return [log_response_for_principal(log, principal) for log in logs]
+
+
+@router.get("/freshness", response_model=list[ProviderFreshnessResponse])
+def read_freshness(db: Session = Depends(get_db)) -> list[ProviderFreshnessResponse]:
+    now = utcnow()
+    freshness: list[ProviderFreshnessResponse] = []
+    for provider_code in PROVIDER_CODES:
+        cached_count = db.scalar(
+            select(func.count())
+            .select_from(StatusCache)
+            .where(StatusCache.provider_code == provider_code),
+        ) or 0
+        valid_cache_count = db.scalar(
+            select(func.count())
+            .select_from(StatusCache)
+            .where(StatusCache.provider_code == provider_code, StatusCache.expires_at > now),
+        ) or 0
+        expired_cache_count = db.scalar(
+            select(func.count())
+            .select_from(StatusCache)
+            .where(StatusCache.provider_code == provider_code, StatusCache.expires_at <= now),
+        ) or 0
+        last_log = db.scalar(
+            select(StatusCheckLog)
+            .where(StatusCheckLog.provider_code == provider_code)
+            .order_by(StatusCheckLog.checked_at.desc())
+            .limit(1),
+        )
+        freshness.append(
+            ProviderFreshnessResponse(
+                provider_code=provider_code,
+                cached_count=cached_count,
+                valid_cache_count=valid_cache_count,
+                expired_cache_count=expired_cache_count,
+                last_checked_at=last_log.checked_at.isoformat() if last_log else None,
+                last_log_status=last_log.result_status if last_log else None,
+                last_error_type=last_log.provider_error_type if last_log else None,
+            ),
+        )
+    return freshness
+
+
+def publish_status_event(
+    settings: Settings,
+    principal: CurrentPrincipal,
+    response: StatusLookupResponse,
+    *,
+    force_refresh: bool,
+) -> None:
+    payload = {
+        "user_id": principal.sub,
+        "provider_code": response.provider_code,
+        "internal_point_id": response.normalized_point_id,
+        "normalized_point_id": response.normalized_point_id,
+        "external_point_id": response.external_point_id,
+        "status": response.status,
+        "cache_hit": response.cache_hit,
+        "force_refresh": force_refresh,
+        "provider_called": response.provider_called,
+        "returned_stale": response.returned_stale,
+        "source": response.source,
+    }
+    publish_best_effort_event(
+        settings,
+        event_type=EventType.STATUS_POINT_CHECKED.value,
+        payload=payload,
+    )
+
+
+def publish_status_error_event(
+    settings: Settings,
+    principal: CurrentPrincipal,
+    *,
+    provider_code: str,
+    external_point_id: str,
+    force_refresh: bool,
+    error_type: str,
+    external_status_code: int | None,
+) -> None:
+    normalized_point_id = f"{provider_code}:{external_point_id}"
+    payload = {
+        "user_id": principal.sub,
+        "provider_code": provider_code,
+        "internal_point_id": normalized_point_id,
+        "normalized_point_id": normalized_point_id,
+        "external_point_id": external_point_id,
+        "status": "unknown",
+        "cache_hit": False,
+        "force_refresh": force_refresh,
+        "provider_called": True,
+        "returned_stale": False,
+        "source": "provider_error",
+        "error_type": error_type,
+        "external_status_code": external_status_code,
+    }
+    publish_best_effort_event(
+        settings,
+        event_type=EventType.STATUS_POINT_CHECKED.value,
+        payload=payload,
+    )

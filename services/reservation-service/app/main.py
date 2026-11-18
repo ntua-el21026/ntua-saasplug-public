@@ -1,0 +1,45 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.config import get_settings
+from app.database import configure_database, init_db
+from app.event_publisher import declare_rabbitmq_topology
+from app.routes import router
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    configure_database()
+    init_db()
+    settings = get_settings()
+    if settings.rabbitmq_topology_declare_on_startup:
+        try:
+            declare_rabbitmq_topology(settings)
+        except Exception:
+            pass
+    yield
+
+
+app = FastAPI(title="reservation-service", version="0.8.0", lifespan=lifespan)
+app.include_router(router)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    settings = get_settings()
+    return {
+        "service": settings.service_name,
+        "status": "running",
+        "scope": "reservation-truth",
+    }
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"service": get_settings().service_name, "status": "healthy"}
+
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    return {"service": get_settings().service_name, "status": "ready"}

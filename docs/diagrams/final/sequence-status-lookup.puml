@@ -1,0 +1,48 @@
+@startuml
+title Status lookup cache hit, live refresh, and fallback sequence
+skinparam shadowing false
+
+actor "EV User or frontend view" as User
+participant "React frontend" as Frontend
+participant "nginx-gateway" as Gateway
+participant "status-service" as Status
+database "status-postgres" as StatusDb
+participant "provider adapter service\nred, green, blue" as ProviderAdapter
+participant "provider database\nmatching provider DB" as ProviderDb
+participant "External provider API" as ExternalApi
+participant "RabbitMQ\nsaasplug.events" as Rabbit
+
+User -> Frontend : Request current point status
+Frontend -> Gateway : GET /api/status/points/{provider}/{externalId}/status?forceRefresh=false
+Gateway -> Status : GET /points/{provider}/{externalId}/status
+Status -> StatusDb : Read status_cache and status_cache_policy
+
+alt Fresh cache and no force refresh
+  Status -> StatusDb : Append status_check_logs
+  Status -> Rabbit : Best-effort publish status.point_checked\ncache_hit=true
+  Status --> Gateway : StatusLookupResponse source=cache
+else Cache miss, expired, or force refresh
+  Status -> Status : Acquire per-point in-process lock\nand recheck cache
+  Status -> ProviderAdapter : GET /internal/points/{externalId}/status
+  ProviderAdapter -> ExternalApi : Provider-specific detail/status call
+  ExternalApi --> ProviderAdapter : Provider JSON payload
+  ProviderAdapter -> ProviderDb : Store raw payload and upsert snapshot
+  ProviderAdapter --> Status : ProviderStatusDTO
+  Status -> StatusDb : Upsert status_cache\nappend status_check_logs
+  Status -> Rabbit : Best-effort publish status.point_checked\nsource=provider_live
+  Status --> Gateway : StatusLookupResponse source=provider_live
+else Provider error with stale cache
+  ProviderAdapter --> Status : Error/timeout
+  Status -> StatusDb : Record provider error and append log
+  Status -> Rabbit : Best-effort publish status.point_checked\nsource=cache_fallback
+  Status --> Gateway : Stale StatusLookupResponse with warning
+else Provider error and no cache
+  ProviderAdapter --> Status : Error/timeout
+  Status -> StatusDb : Append failed status_check_logs
+  Status -> Rabbit : Best-effort publish status.point_checked\nerror metadata
+  Status --> Gateway : 502/504 lookup error
+end
+
+Gateway --> Frontend : Status or error
+Frontend --> User : Display status, warning, or retry option
+@enduml

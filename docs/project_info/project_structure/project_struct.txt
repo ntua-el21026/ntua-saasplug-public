@@ -1,0 +1,662 @@
+NTUA-saasPlug/
+├── apps/
+│   ├── frontend/
+│   │   ├── src/
+│   │   │   ├── assets/
+│   │   │   │   ├── auth/
+│   │   │   │   │   └── ev-charging-map-hero.png
+│   │   │   │   ├── brand/
+│   │   │   │   │   └── saasplug-mark.svg
+│   │   │   │   ├── icons/
+│   │   │   │   │   ├── charger.svg
+│   │   │   │   │   ├── invoice.svg
+│   │   │   │   │   ├── operator.svg
+│   │   │   │   │   ├── plug.svg
+│   │   │   │   │   └── provider.svg
+│   │   │   │   └── map/
+│   │   │   │       ├── marker-available.svg
+│   │   │   │       ├── marker-busy.svg
+│   │   │   │       ├── marker-selected.svg
+│   │   │   │       └── marker-unavailable.svg
+│   │   │   ├── components/
+│   │   │   │   ├── domain/
+│   │   │   │   │   ├── billing/
+│   │   │   │   │   │   └── index.tsx
+│   │   │   │   │   ├── ev/
+│   │   │   │   │   │   └── index.tsx
+│   │   │   │   │   ├── operator/
+│   │   │   │   │   │   └── index.tsx
+│   │   │   │   │   ├── provider/
+│   │   │   │   │   │   └── index.tsx
+│   │   │   │   │   └── status/
+│   │   │   │   │       └── index.tsx
+│   │   │   │   ├── layout/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── ui/
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── primitives.tsx
+│   │   │   │   ├── AccessDenied.tsx
+│   │   │   │   ├── AppShell.tsx
+│   │   │   │   ├── Feedback.tsx
+│   │   │   │   └── StatusBadge.tsx
+│   │   │   ├── design/
+│   │   │   │   ├── motion.css
+│   │   │   │   ├── shadows.css
+│   │   │   │   ├── theme.css
+│   │   │   │   ├── tokens.ts
+│   │   │   │   └── typography.css
+│   │   │   ├── features/
+│   │   │   │   ├── admin/
+│   │   │   │   │   ├── AdminPages.tsx
+│   │   │   │   │   └── AdminUi.tsx
+│   │   │   │   ├── auth/
+│   │   │   │   │   ├── AuthContext.tsx
+│   │   │   │   │   ├── AuthLayout.tsx
+│   │   │   │   │   ├── GoogleCallbackPage.tsx
+│   │   │   │   │   ├── LoginPage.tsx
+│   │   │   │   │   ├── LogoutPage.tsx
+│   │   │   │   │   ├── ProfilePage.tsx
+│   │   │   │   │   ├── ProviderRegistrationPage.tsx
+│   │   │   │   │   └── RegisterPage.tsx
+│   │   │   │   ├── catalog/
+│   │   │   │   │   ├── CatalogMap.tsx
+│   │   │   │   │   ├── CatalogPage.tsx
+│   │   │   │   │   └── PointDetailPage.tsx
+│   │   │   │   ├── landing/
+│   │   │   │   │   └── LandingPage.tsx
+│   │   │   │   └── reservations/
+│   │   │   │       └── ReservationsPage.tsx
+│   │   │   ├── lib/
+│   │   │   │   ├── utils/
+│   │   │   │   │   └── classNames.ts
+│   │   │   │   ├── api.ts
+│   │   │   │   ├── formatting.ts
+│   │   │   │   ├── routing.ts
+│   │   │   │   ├── statusLookups.ts
+│   │   │   │   ├── storage.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── styles/
+│   │   │   │   └── app.css
+│   │   │   ├── test/
+│   │   │   │   ├── admin-routing.test.tsx
+│   │   │   │   ├── app-smoke.test.tsx
+│   │   │   │   ├── catalog-map-ui.test.tsx
+│   │   │   │   ├── frontend-secret-boundary.test.ts
+│   │   │   │   ├── routing.test.ts
+│   │   │   │   ├── setup.ts
+│   │   │   │   └── status-lookups.test.ts
+│   │   │   ├── App.tsx
+│   │   │   ├── main.tsx
+│   │   │   └── vite-env.d.ts
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── eslint.config.js
+│   │   ├── index.html
+│   │   ├── nginx.conf
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── tsconfig.json
+│   │   └── vite.config.ts
+│   └── README.md
+├── deploy/
+│   ├── nginx/
+│   │   ├── default.conf
+│   │   └── README.md
+│   └── README.md
+├── docs/
+│   ├── ai/
+│   │   ├── codex-runs/
+│   │   │   ├── 000-audit-only.md
+│   │   │   ├── 001-repo-foundation.md
+│   │   │   ├── 002-docker-gateway.md
+│   │   │   ├── 003-auth-service.md
+│   │   │   ├── 004-provider-registry-service.md
+│   │   │   ├── 005-provider-services.md
+│   │   │   ├── 006-catalog-service.md
+│   │   │   ├── 007-status-service.md
+│   │   │   ├── 008-reservation-service.md
+│   │   │   ├── 009-rabbitmq-event-infrastructure.md
+│   │   │   ├── 00B-logging-and-github-setup.md
+│   │   │   ├── 010-analytics-service.md
+│   │   │   ├── 011-billing-service.md
+│   │   │   ├── 012-frontend-ev-flows.md
+│   │   │   ├── 013-provider-operator-dashboards.md
+│   │   │   ├── 014-final-docs-uml.md
+│   │   │   ├── 015-finalization-project-audit.md
+│   │   │   ├── 015-frontend-design-system-redesign.md
+│   │   │   ├── 016-live-env-verification.md
+│   │   │   ├── 017-scheduler-design.md
+│   │   │   ├── 018-scheduler-control-plane-implementation.md
+│   │   │   ├── 019-phase-d-test-expansion.md
+│   │   │   ├── 020-comprehensive-test-expansion-and-project-closure.md
+│   │   │   ├── 021-final-verification-only.md
+│   │   │   ├── 022-live-env-full-verification.md
+│   │   │   ├── 023-readme-documentation-polish.md
+│   │   │   ├── 025-frontend-maplibre-integration.md
+│   │   │   ├── 026-login-provider-entry-polish.md
+│   │   │   ├── 027-frontend-provider-map-fixes.md
+│   │   │   ├── 028-frontend-responsive-polish.md
+│   │   │   ├── 029-map-radius-role-events.md
+│   │   │   ├── 030-map-radius-marker-correction.md
+│   │   │   ├── 031-catalog-api-circle-filtering.md
+│   │   │   ├── 032-event-scheduler-cadence-and-operator-controls.md
+│   │   │   ├── 033-viewport-derived-map-radius.md
+│   │   │   ├── 034-ordered-scheduler-maintenance-run.md
+│   │   │   ├── 035-ui-brand-and-reservation-polish.md
+│   │   │   ├── 036-current-price-computation-answer.md
+│   │   │   ├── 037-ev-cost-label-and-analytics-cadence.md
+│   │   │   ├── 038-google-ev-password-profile.md
+│   │   │   ├── 039-ev-reservation-cost-analytics.md
+│   │   │   ├── 040-nginx-runtime-dns-gateway-paths.md
+│   │   │   ├── 041-provider-filter-and-point-access-polish.md
+│   │   │   ├── 042-provider-catalog-scope-enforcement.md
+│   │   │   ├── 043-login-map-reservation-message-polish.md
+│   │   │   ├── 044-ui-final-polish-pass-1.md
+│   │   │   ├── 045-ui-final-polish-pass-2.md
+│   │   │   ├── 046-ui-final-polish-pass-3.md
+│   │   │   ├── 047-ui-final-polish-pass-4.md
+│   │   │   ├── 048-operator-sync-catalog-health-polish.md
+│   │   │   ├── 049-ev-reservations-scroll-and-project-closure.md
+│   │   │   ├── 050-final-ui-polish-date-actions-operator-tabs.md
+│   │   │   ├── 051-verified-audit-fixes-safe-finalization.md
+│   │   │   ├── 052-frontend-reservation-retry-idempotency.md
+│   │   │   ├── 053-final-audit-fixes-f001-f018.md
+│   │   │   ├── 053-operator-scheduler-interval-presets.md
+│   │   │   ├── 054-auth-landing-hero-polish.md
+│   │   │   ├── 055-status-cache-consistency-and-profile-polish.md
+│   │   │   ├── 056-catalog-progress-landing-map-viewport.md
+│   │   │   ├── 057-map-fullscreen-pricing-status-views.md
+│   │   │   ├── 058-landing-hero-spacing.md
+│   │   │   ├── 059-map-controls-polish.md
+│   │   │   ├── 060-map-quick-view-point-events.md
+│   │   │   ├── 060-operator-pricing-tabs.md
+│   │   │   ├── 061-provider-points-filters.md
+│   │   │   ├── 062-invoices-and-sync-dedup-polish.md
+│   │   │   ├── 063-final-diagram-audit-and-correction.md
+│   │   │   ├── 064-readme-audit-and-update.md
+│   │   │   ├── 065-markdown-lint-configuration.md
+│   │   │   ├── _template.md
+│   │   │   └── README.md
+│   │   ├── prompts/
+│   │   │   ├── prompt_00b_logging_and_github_setup.md
+│   │   │   ├── prompt_01_repo_foundation.md
+│   │   │   ├── prompt_02_docker_gateway.md
+│   │   │   ├── prompt_03_auth_service.md
+│   │   │   ├── prompt_04_provider_registry_service.md
+│   │   │   ├── prompt_05_provider_services.md
+│   │   │   ├── prompt_06_catalog_service.md
+│   │   │   ├── prompt_07_status_service.md
+│   │   │   ├── prompt_08_reservation_service.md
+│   │   │   ├── prompt_09_rabbitmq_event_infrastructure.md
+│   │   │   ├── prompt_10_analytics_service.md
+│   │   │   ├── prompt_11_billing_service.md
+│   │   │   ├── prompt_12_frontend_ev_flows.md
+│   │   │   ├── prompt_13_provider_operator_dashboards.md
+│   │   │   ├── prompt_14_final_docs_uml.md
+│   │   │   ├── prompt_15_finalization_project_audit.md
+│   │   │   ├── prompt_15_frontend_design_system_redesign.md
+│   │   │   ├── prompt_16_live_env_verification.md
+│   │   │   ├── prompt_17_scheduler_design.md
+│   │   │   ├── prompt_18_scheduler_control_plane_implementation.md
+│   │   │   ├── prompt_19_phase_d_test_expansion.md
+│   │   │   ├── prompt_21_final_verification_only.md
+│   │   │   ├── prompt_22_live_env_full_verification.md
+│   │   │   ├── prompt_23_readme_documentation_polish.md
+│   │   │   ├── prompt_24_frontend_design_system_redesign.md
+│   │   │   └── README.md
+│   │   ├── prompts_chatgpt/
+│   │   │   ├── pdf/
+│   │   │   │   ├── NTUA - Τεχνολογίες Υπηρεσιών Λογισμικού - App Audit and Env Connection.pdf
+│   │   │   │   ├── NTUA - Τεχνολογίες Υπηρεσιών Λογισμικού - App Build - Prompts 1-14.pdf
+│   │   │   │   ├── NTUA--~1.PDF
+│   │   │   │   └── NTUA--~4.PDF
+│   │   │   └── prompts/
+│   │   │       ├── prompt_001.md
+│   │   │       ├── prompt_002.md
+│   │   │       ├── prompt_003.md
+│   │   │       ├── prompt_004.md
+│   │   │       ├── prompt_005.md
+│   │   │       ├── prompt_006.md
+│   │   │       ├── prompt_007.md
+│   │   │       ├── prompt_008.md
+│   │   │       ├── prompt_009.md
+│   │   │       ├── prompt_010.md
+│   │   │       ├── prompt_011.md
+│   │   │       ├── prompt_012.md
+│   │   │       ├── prompt_013.md
+│   │   │       ├── prompt_014.md
+│   │   │       ├── prompt_015.md
+│   │   │       ├── prompt_016.md
+│   │   │       ├── prompt_017.md
+│   │   │       ├── prompt_018.md
+│   │   │       ├── prompt_019.md
+│   │   │       ├── prompt_020.md
+│   │   │       ├── prompt_021.md
+│   │   │       ├── prompt_022.md
+│   │   │       ├── prompt_023.md
+│   │   │       ├── prompt_024.md
+│   │   │       ├── prompt_025.md
+│   │   │       ├── prompt_026.md
+│   │   │       ├── prompt_027.md
+│   │   │       ├── prompt_028.md
+│   │   │       ├── prompt_029.md
+│   │   │       └── README.md
+│   │   ├── prompt-log.md
+│   │   └── README.md
+│   ├── assignment/
+│   │   ├── plantUML_diagrams/
+│   │   │   ├── project_semantics_semantics.puml
+│   │   │   ├── README.md
+│   │   │   ├── saasPlug_interfaces__concept_.puml
+│   │   │   ├── saasPlug_interfaces_for_2025_2026_project.puml
+│   │   │   ├── saasPlug_status_update_overview.puml
+│   │   │   └── saasPlug_use_case_diagram.puml
+│   │   ├── providers/
+│   │   │   ├── postman_collections/
+│   │   │   │   ├── bluePlug.postman_collection.json
+│   │   │   │   ├── greenPlug.postman_collection.json
+│   │   │   │   └── redPlug.postman_collection.json
+│   │   │   ├── yaml/
+│   │   │   │   ├── bluePlug.yaml
+│   │   │   │   ├── greenPlug.yaml
+│   │   │   │   └── redPlug.yaml
+│   │   │   ├── README.md
+│   │   │   ├── swagger_apis_hypothetical_providers.md
+│   │   │   └── Γενική περιγραφή APIs παρόχων φόρτισης.pdf
+│   │   ├── README.md
+│   │   ├── SRS Εξαμηνιαίας Εργασίας.docx
+│   │   ├── Διαγράμματα SRS.vpp
+│   │   └── Εκφώνηση Εξαμηνιαίας Εργασίας.pdf
+│   ├── diagrams/
+│   │   ├── final/
+│   │   │   ├── activity-invoice-payment.puml
+│   │   │   ├── activity-provider-sync.puml
+│   │   │   ├── activity-search-reservation.puml
+│   │   │   ├── class-data-structures.puml
+│   │   │   ├── class-service-apis.puml
+│   │   │   ├── component.puml
+│   │   │   ├── data-model.puml
+│   │   │   ├── deployment.puml
+│   │   │   ├── diagram-audit.md
+│   │   │   ├── README.md
+│   │   │   ├── saasplug-final-uml.md
+│   │   │   ├── sequence-analytics-billing-events.puml
+│   │   │   ├── sequence-login.puml
+│   │   │   ├── sequence-provider-sync-catalog-import.puml
+│   │   │   ├── sequence-reservation.puml
+│   │   │   ├── sequence-search-map.puml
+│   │   │   ├── sequence-status-lookup.puml
+│   │   │   └── use-case.puml
+│   │   ├── intermediate/
+│   │   │   ├── puml/
+│   │   │   │   ├── 01_use_case_diagram.puml
+│   │   │   │   ├── 02_activity_provider_registration.puml
+│   │   │   │   ├── 03_activity_provider_catalog_sync.puml
+│   │   │   │   ├── 04_activity_search_status_refresh.puml
+│   │   │   │   ├── 05_activity_reservation_billing.puml
+│   │   │   │   ├── 06_class_exchanged_data_dtos.puml
+│   │   │   │   ├── 07_class_service_apis.puml
+│   │   │   │   ├── 08_data_design_persistence_model.puml
+│   │   │   │   ├── 09_component_diagram.puml
+│   │   │   │   ├── 10_deployment_diagram.puml
+│   │   │   │   ├── 11_sequence_login_google.puml
+│   │   │   │   ├── 12_sequence_search_point.puml
+│   │   │   │   ├── 13_sequence_view_fresh_status.puml
+│   │   │   │   ├── 14_sequence_reservation.puml
+│   │   │   │   ├── 15_sequence_register_saascharge.puml
+│   │   │   │   ├── 16_sequence_provider_catalog_sync.puml
+│   │   │   │   ├── 17_sequence_analytics_export.puml
+│   │   │   │   └── 18_sequence_invoice_payment.puml
+│   │   │   ├── architecture_decisions.md
+│   │   │   ├── README.md
+│   │   │   └── saasplug_uml_model.md
+│   │   └── README.md
+│   ├── lectures/
+│   │   ├── 6. Ευκρινείς Εικόνες Διαφανειών/
+│   │   │   ├── slide52.png
+│   │   │   ├── slide53.png
+│   │   │   ├── slide54.png
+│   │   │   ├── slide55.png
+│   │   │   ├── slide56.png
+│   │   │   ├── slide57.png
+│   │   │   ├── slide58.png
+│   │   │   ├── slide59.png
+│   │   │   ├── slide60.png
+│   │   │   ├── slide61.png
+│   │   │   ├── slide62.png
+│   │   │   ├── slide63.png
+│   │   │   ├── slide64-65-66.png
+│   │   │   └── slide67-68-69.png
+│   │   ├── bibliography/
+│   │   │   ├── Engineering Software as a Service - An Agile Approach Using Cloud Computing.pdf
+│   │   │   ├── Paper_3-Impacts_of_Decomposition_Techniques.pdf
+│   │   │   └── Paper_4-Comparison_of_Event_Choreography.pdf
+│   │   ├── 1.1. Εισαγωγή - Eφαρμογές SaaS, περίγραμμα του μαθήματος.pdf
+│   │   ├── 10 HTML, CSS, DOM, jquery, ajax.pdf
+│   │   ├── 11.1 Data layer - ORM.pdf
+│   │   ├── 11.2  Using LLMs for microservices architectures. Metrics.pdf
+│   │   ├── 11.3 Extra - saas_llm_arch_materials.zip
+│   │   ├── 12.1 BDD, Παραδείγματα αρχιτεκτονικής.pdf
+│   │   ├── 12.2 Συζήτηση για εργασία.pdf
+│   │   ├── 13.1 Σύνοψη αρχιτεκτονικών SaaS.pdf
+│   │   ├── 13.2 BDD.pdf
+│   │   ├── 13.3 Ολοκλήρωση μαθήματος, παλαιά θέματα.pdf
+│   │   ├── 3. JavaScript.pdf
+│   │   ├── 4. Cloud Computing and OpenStack.pdf
+│   │   ├── 5.1 Εισαγωγή σε Service-Oriented-Architectures (SOA).pdf
+│   │   ├── 5.2 Εισαγωγή σε αρχιτεκτονικές Microservices.pdf
+│   │   ├── 6.1 Αρχιτεκτονικές microservices και SOA παραδείγματα και παραγωγή με LLMs.pdf
+│   │   ├── 6.2 Υπηρεσίες Messaging - concepts.pdf
+│   │   ├── 7.1 Hands-on lab - messaging.pdf
+│   │   ├── 7.2 API gateways και load balancing.pdf
+│   │   ├── 7.3 Extra - 1.pdf
+│   │   ├── 7.4 Extra - 2.pdf
+│   │   ├── 8.1 React Intro.pdf
+│   │   ├── 8.2 Next Intro.pdf
+│   │   ├── 8.3 Astro Intro.pdf
+│   │   ├── 9.1 Virtualization, Virtual Machines, Containers & Orchestration Systems.pdf
+│   │   └── 9.2 Docker Lab.pdf
+│   ├── postman/
+│   │   ├── data/
+│   │   │   ├── mutation.safe-local-cases.json
+│   │   │   ├── regression.catalog-status-cases.json
+│   │   │   ├── regression.ev-search-cases.json
+│   │   │   ├── regression.operator-cases.json
+│   │   │   ├── regression.provider-cases.json
+│   │   │   └── security.negative-cases.json
+│   │   ├── newman/
+│   │   │   └── README.md
+│   │   ├── README.md
+│   │   ├── saasPlug.local.mutation.postman_collection.json
+│   │   ├── saasPlug.local.postman_environment.json
+│   │   ├── saasPlug.local.regression.postman_collection.json
+│   │   ├── saasPlug.local.security.postman_collection.json
+│   │   └── saasPlug.local.smoke.postman_collection.json
+│   ├── project_info/
+│   │   ├── project_analytics/
+│   │   │   ├── project_analytics.py
+│   │   │   └── project_analytics.txt
+│   │   └── project_structure/
+│   │       ├── project_struct.py
+│   │       └── project_struct.txt
+│   ├── specs/
+│   │   ├── README.md
+│   │   └── SPECIFICATIONS.md
+│   ├── architecture-summary.md
+│   ├── final-verification.md
+│   ├── README.md
+│   └── submission-checklist.md
+├── packages/
+│   ├── event-contracts/
+│   │   └── README.md
+│   ├── events/
+│   │   ├── saasplug_events/
+│   │   │   ├── __init__.py
+│   │   │   ├── consumer.py
+│   │   │   ├── envelope.py
+│   │   │   ├── idempotency.py
+│   │   │   ├── publisher.py
+│   │   │   ├── routing.py
+│   │   │   └── topology.py
+│   │   ├── tests/
+│   │   │   ├── test_consumer.py
+│   │   │   ├── test_envelope.py
+│   │   │   ├── test_idempotency.py
+│   │   │   ├── test_publisher.py
+│   │   │   ├── test_routing.py
+│   │   │   └── test_topology.py
+│   │   ├── pyproject.toml
+│   │   └── README.md
+│   ├── provider-normalization/
+│   │   └── README.md
+│   ├── shared-contracts/
+│   │   └── README.md
+│   └── README.md
+├── scripts/
+│   ├── lint/
+│   │   ├── run-all.sh
+│   │   ├── run-markdown.sh
+│   │   └── run-python.sh
+│   ├── postman/
+│   │   ├── lib/
+│   │   │   └── env.sh
+│   │   ├── README.md
+│   │   ├── run-all-local.sh
+│   │   ├── run-mutation.sh
+│   │   ├── run-regression.sh
+│   │   ├── run-security.sh
+│   │   └── run-smoke.sh
+│   └── README.md
+├── services/
+│   ├── analytics-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── aggregates.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── ingestion.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── rabbitmq_consumer.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   └── security.py
+│   │   ├── tests/
+│   │   │   └── test_analytics_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── auth-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── dependencies.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   ├── security.py
+│   │   │   └── seed.py
+│   │   ├── tests/
+│   │   │   └── test_auth_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── billing-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── event_ingestion.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── invoicing.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── pricing.py
+│   │   │   ├── rabbitmq_consumer.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   └── security.py
+│   │   ├── tests/
+│   │   │   └── test_billing_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── blue-provider-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── normalization.py
+│   │   │   ├── provider_config.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   └── storage.py
+│   │   ├── tests/
+│   │   │   └── test_provider_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── catalog-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── importer.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── provider_client.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   ├── security.py
+│   │   │   └── status_client.py
+│   │   ├── tests/
+│   │   │   └── test_catalog_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── green-provider-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── normalization.py
+│   │   │   ├── provider_config.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   └── storage.py
+│   │   ├── tests/
+│   │   │   └── test_provider_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── provider-registry-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── audit.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── dependencies.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   ├── security.py
+│   │   │   └── seed.py
+│   │   ├── tests/
+│   │   │   └── test_provider_registry_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── red-provider-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── normalization.py
+│   │   │   ├── provider_config.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   └── storage.py
+│   │   ├── tests/
+│   │   │   └── test_provider_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── reservation-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── catalog_client.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── provider_client.py
+│   │   │   ├── reservation_logic.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   ├── security.py
+│   │   │   └── status_client.py
+│   │   ├── tests/
+│   │   │   └── test_reservation_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── scheduler-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── executor.py
+│   │   │   ├── jobs.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── routes.py
+│   │   │   ├── runner.py
+│   │   │   ├── schemas.py
+│   │   │   └── security.py
+│   │   ├── tests/
+│   │   │   └── test_scheduler_service_api.py
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── status-service/
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── database.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── provider_client.py
+│   │   │   ├── routes.py
+│   │   │   ├── schemas.py
+│   │   │   ├── security.py
+│   │   │   └── status_logic.py
+│   │   ├── tests/
+│   │   │   └── test_status_service_api.py
+│   │   ├── .dockerignore
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   └── README.md
+├── tests/
+│   ├── README.md
+│   └── test_gateway_contract.py
+├── .env.example
+├── .env.example.correct
+├── .gitattributes
+├── .gitignore
+├── .markdownlint-cli2.jsonc
+├── AGENTS.md
+├── docker-compose.yml
+├── LICENSE
+├── openapi.json
+├── pyproject.toml
+├── README.md
+└── requirements-dev.txt
+
+Total directories: 103, Total files: 557
